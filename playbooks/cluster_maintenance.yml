@@ -1,0 +1,22 @@
+---
+- name: Proxmox Cluster Maintenance
+  hosts: pve_cluster
+  become: yes
+  tasks:
+    - name: Update all packages (Force bypass repo errors)
+      apt:
+        upgrade: dist
+        update_cache: yes
+        # These two lines bypass the "Unauthenticated" and "No Release File" errors
+        allow_unauthenticated: yes
+        force_apt_get: yes 
+
+    - name: Check if a reboot is required
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
+
+    - name: Report reboot status
+      debug:
+        msg: "Node {{ inventory_hostname }} requires a reboot!"
+      when: reboot_required_file.stat.exists
