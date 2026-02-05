@@ -190,9 +190,39 @@ The final verification of the infrastructure's resilience:
   </tr>
   <tr>
     <td>
-      <img src="data/P3/P3_report.png" alt="Report" width="300" />
+      <img src="data/P3/P3_BU_Report.png" alt="Report" width="300" />
       <p>Backup report</p>
     </td>
    </tr>
 </table>
 
+#### Phase: 04 Observability and Monitoring Integration
+
+* Distributed Metric Collection via Exporters: The foundation of the monitoring stack was established by deploying prometheus-node-exporter across all Proxmox hosts (pve-01, pve-02, and pve-03). This allows for the collection of hardware-level metrics, such as CPU cycles, memory pressure, and network throughput, which are essential for auditing cluster performance.
+
+* Centralized Time-Series Data Orchestration: A centralized Prometheus server was configured on the management station to serve as the cluster's primary time-series database. The configuration included a refined scrape_configs block targeting the management IPs of the cluster nodes, ensuring a consistent 15-second data resolution for all incoming metrics.
+
+* High-Availability Alerting Logic: An automated alerting engine was integrated using prometheus-alertmanager and a custom ruleset. These rules specifically target cluster "liveness," triggering a critical alert if any Proxmox node remains unreachable for more than one minute, thus providing the immediate notification necessary for maintaining cluster quorum.
+
+* Visualization and Dashboard Development: Grafana was deployed as the visualization layer, connected to the Prometheus data source. This enables the creation of high-fidelity dashboards that track critical HPC indicators, including disk I/O latency, memory saturation across the cluster, and real-time status of the high-availability failover events.
+
+* Automated Monitoring Lifecycle: The entire monitoring stack—from exporter installation to the configuration of alerting rules—was fully automated using Ansible. This ensures that new nodes added to the Syracuse-based lab are automatically integrated into the observability framework, maintaining a "single pane of glass" view for the entire infrastructure.
+
+<table>
+  <tr>
+    <td>
+      <img src="data/P4/P4_Prom.png" alt="Prom" width="300" />
+      <p>Prometheus</p>
+    </td>
+    <td>
+      <img src="data/P4/P4_Grafana.png" alt="Grafana" width="300" />
+      <p>Grafana Dashboard</p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="data/P4/P4_Alerts.png" alt="Alerts" width="300" />
+      <p>Alerts</p>
+    </td>
+   </tr>
+</table>
