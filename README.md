@@ -104,4 +104,63 @@ The final verification of the infrastructure's resilience:
   </tr>
 </table>
 
+<table>
+  <tr>
+    <td>
+      <img src="data/P1/P1_VM Manager.png" alt="VM" width="300" />
+      <p>Node Manager</p>
+    </td>
+    <td>
+      <img src="data/P1/P1_GUI_DCN.png" alt="Datacenter" width="300" />
+      <p>Data Center Structure</p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="data/P1/P1_DC_Dash.png" alt="DC Dash" width="300" />
+      <p>Data Center Dashboard</p>
+    </td>
+    <td>
+      <img src="data/P1/P1_HA.png" alt="HA" width="300" />
+      <p>High Availability Rules</p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="data/P1/P1_Ceph.png" alt="Ceph" width="300" />
+      <p>Ceph Dashboard</p>
+      </td>
+   </tr>
+</table>
+
+
 #### Phase: 02 Declarative Configuration (IaC)
+
+* Deterministic Inventory Management: A centralized hosts.ini file was established to define the cluster topology. This inventory groups physical nodes (pve-01, pve-02, pve-03) and their respective management IPs, enabling orchestrated execution across the entire infrastructure from a single control node.
+
+* Automated Virtual Machine Lifecycle Management: Ansible playbooks were developed to manage the lifecycle of Virtual Machines across the cluster. By leveraging the Proxmox API via Ansible modules, tasks were implemented to programmatically create, start, and stop VMs, ensuring that compute resources can be scaled or shifted without manual GUI intervention.
+
+* Cluster Health and Status Reporting: Automated reporting tools were created using Ansible to audit the state of the cluster. These playbooks gather real-time data on package versions, service status, and resource utilization, generating unified health reports to verify that all nodes remain in Version Unison and compliant with the established baseline.
+
+* Modular Role-Based Architecture: The automation logic was decomposed into reusable Ansible roles. The common role enforces a consistent baseline by managing SSH keys for passwordless communication, hardening system security, and synchronizing basic packages across all cluster members.
+
+* Automated Repository and Version Synchronization: To resolve critical version skews between the Proxmox Manager and the UI Toolkit, a specialized configuration task was deployed. This automated the standardization of /etc/apt/sources.list, enforcing the use of identical suites across the cluster to maintain the stable 8.4.16 / 4.3.13 version set.
+
+<table>
+  <tr>
+    <td>
+      <img src="data/P2/P2_Struc.png" alt="File" width="300" />
+      <p>File Structure</p>
+    </td>
+    <td>
+      <img src="data/P2/P2_report.png" alt="Report" width="300" />
+      <p>Cluster Health Report</p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="data/P2/P2_ssh.png" alt="SSH" width="300" />
+      <p>SSH from Commander</p>
+    </td>
+   </tr>
+</table>

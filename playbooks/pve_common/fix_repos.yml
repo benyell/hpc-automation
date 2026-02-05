@@ -1,28 +1,28 @@
 ---
-- name: Emergency Repository Recovery
+- name: Standardize Cluster Repositories for System Harmony
   hosts: pve_cluster
   become: yes
   tasks:
-    - name: Purge all existing apt source files to stop duplicates
-      shell: "rm -rf /etc/apt/sources.list.d/* && truncate -s 0 /etc/apt/sources.list"
-
-    - name: Write Stable Debian & Proxmox Sources
+    - name: 1. Clean and Set Primary Sources
       copy:
         dest: /etc/apt/sources.list
         content: |
-          deb http://ftp.debian.org/debian bookworm main contrib non-free-remote
+          deb http://ftp.debian.org/debian bookworm main contrib non-free-firmware
           deb http://ftp.debian.org/debian bookworm-updates main contrib
           deb http://security.debian.org/debian-security bookworm-security main contrib
           
-          # Trusted No-Subscription Proxmox
-          deb [trusted=yes] http://download.proxmox.com/debian/pve bookworm pve-no-subscription
-          
-          # Trusted Ceph Reef
-          deb [trusted=yes] http://download.proxmox.com/debian/ceph-reef bookworm no-subscription
+          # Proxmox No-Subscription Repository
+          deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription
 
-    - name: Fix Proxmox 'Enterprise' prompt in JavaScript
-      lineinfile:
-        path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
-        regexp: 'if \(res.data.status.toLowerCase\(\) !== .active.\) \{'
-        line: 'if (false) {'
-        state: present
+    - name: 2. Purge conflicting .list files
+      file:
+        path: "/etc/apt/sources.list.d/{{ item }}"
+        state: absent
+      loop:
+        - pve-enterprise.list
+        - pve-install-repo.list
+        - pve-install-repo.list.list
+
+    - name: 3. Update Package Cache
+      apt:
+        update_cache: yes
