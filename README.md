@@ -47,15 +47,15 @@ The final verification of the infrastructure's resilience:
 
 #### Phase: 01 Building the foundation
 
-* Multi-Node Hypervisor Orchestration Successfully deployed and synchronized three physical Proxmox VE 8.x nodes (pve-01, pve-02, pve-03) into a unified management cluster. This setup provides a single-pane-of-glass view of the entire compute pool and enables centralized resource scheduling.
+* Multi-Node Hypervisor Orchestration: Successfully deployed and synchronized three physical Proxmox VE 8.x nodes (pve-01, pve-02, pve-03) into a unified management cluster. This setup provides a single-pane-of-glass view of the entire compute pool and enables centralized resource scheduling.
 
-* Dedicated Corosync Fabric for Quorum Configured a dedicated, low-latency network interface for Corosync communication. By isolating cluster heartbeat traffic from standard VM data traffic, I ensured Quorum stability and prevented "Split-Brain" scenarios, where nodes might attempt to start the same VM simultaneously.
+* Dedicated Corosync Fabric for Quorum: Configured a dedicated, low-latency network interface for Corosync communication. By isolating cluster heartbeat traffic from standard VM data traffic, I ensured Quorum stability and prevented "Split-Brain" scenarios, where nodes might attempt to start the same VM simultaneously.
 
-* Converged Storage & HA Replication Implemented a shared storage fabric (ZFS Replication/NFS) to ensure VM disk images are consistent across all nodes. This architecture is the prerequisite for High Availability (HA), allowing the cluster to detect a node failure and automatically "resurrect" affected VMs on a healthy host.
+* Converged Storage & HA Replication: Implemented a shared storage fabric (ZFS Replication/NFS) to ensure VM disk images are consistent across all nodes. This architecture is the prerequisite for High Availability (HA), allowing the cluster to detect a node failure and automatically "resurrect" affected VMs on a healthy host.
 
-* Proactive Fencing & Failover Policies Defined strict HA "Fencing" policies to manage how the cluster reacts during a hardware outage. I configured specialized HA Groups to prioritize critical workloads (like our HPC worker nodes), ensuring they are the first to be recovered during a re-fencing event.
+* Proactive Fencing & Failover Policies: Defined strict HA "Fencing" policies to manage how the cluster reacts during a hardware outage. I configured specialized HA Groups to prioritize critical workloads (like our HPC worker nodes), ensuring they are the first to be recovered during a re-fencing event.
 
-* Live Migration (Zero-Downtime Maintenance) Validated the networking and storage stack by performing Live Migrations. This allows for the movement of running virtual machines between physical hosts with zero packet loss or downtime, a critical requirement for performing host hardware maintenance without interrupting research computations.
+* Live Migration (Zero-Downtime Maintenance): Validated the networking and storage stack by performing Live Migrations. This allows for the movement of running virtual machines between physical hosts with zero packet loss or downtime, a critical requirement for performing host hardware maintenance without interrupting research computations.
 
 <table>
   <tr>
@@ -164,3 +164,35 @@ The final verification of the infrastructure's resilience:
     </td>
    </tr>
 </table>
+
+#### Phase: 03 Hybrid-Cloud Storage Integration (Python & Boto3)
+
+* Automated Snapshot Generation and Multi-Stage Retrieval: The process begins with an automated trigger that executes Proxmox vzdump on a target node to create a consistent, compressed snapshot of virtual machines. Once the backup is verified, the system utilizes a "fetch-and-forward" pattern where the large archive file is pulled from the Proxmox node to a central management station (Ubuntu Commander) to prepare it for cloud egress.
+
+* Cloud Infrastructure and Identity Security: An AWS S3 bucket named yash-proxmox-backups was provisioned as the secure, durable cloud target. Access is strictly controlled via IAM credentials and managed within the automation logic using Ansible Vault to ensure that sensitive AWS keys and passphrases are never stored in plain text.
+
+* Python-Driven Cloud Orchestration via Boto3: A custom Python script utilizing the boto3 SDK acts as the primary cloud interface. This script programmatically manages the selection of the latest backup archives and handles the complex API calls required to perform reliable uploads to the S3 bucket, abstracting the cloud complexity away from the cluster hardware.
+
+* Zero-Knowledge Encryption Layer: To ensure data privacy in the cloud, a localized encryption step was implemented using the gnupg library. Before the data leaves the local network, the backup file is symmetrically encrypted with a robust passphrase; only the encrypted .gpg version is uploaded to AWS, ensuring that the cloud provider has zero visibility into the actual contents of the virtual disks.
+
+* Real-Time Audit and Reporting Engine: The pipeline includes an integrated reporting task that generates time-stamped audit logs for every backup cycle. These reports capture the source node identity, file naming conventions, and precise file sizes (converted to KB), providing the administrator with an immediate trail of success for the disaster recovery workflow.
+
+<table>
+  <tr>
+    <td>
+      <img src="data/P3/P3_S3.png" alt="S3" width="300" />
+      <p>S3 Storage</p>
+    </td>
+    <td>
+      <img src="data/P3/P3_S3_BU.png" alt="S3_BU" width="300" />
+      <p>Backup Details</p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="data/P3/P3_report.png" alt="Report" width="300" />
+      <p>Backup report</p>
+    </td>
+   </tr>
+</table>
+
