@@ -1,0 +1,38 @@
+# --- Python & System ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+.env
+
+# --- Ansible Secrets ---
+# NEVER commit your vault password file if you use one
+.ansible_vault_pass
+# If you keep temporary inventory files or retry files
+*.retry
+
+# --- SSH & Security ---
+# Keep your private keys out of GitHub!
+*.pem
+*.key
+id_rsa
+id_ecdsa
+
+# --- GPG & Backups ---
+# Do not upload the actual backups or the raw GPG keys
+*.gpg
+/tmp/hpc_restores/
+/backups/
+
+# --- Infrastructure & OS ---
+# Ignore the large Proxmox/VM disk images or logs
+*.iso
+*.img
+*.qcow2
+*.log
+
+# --- IDE & Local Config ---
+.vscode/
+.idea/
+.DS_Store
