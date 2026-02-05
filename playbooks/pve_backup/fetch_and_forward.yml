@@ -3,7 +3,7 @@
   hosts: pve_cluster
   become: yes
   vars_files:
-    - ../vars/secrets.yml
+    - ../../vars/secrets.yml
   tasks:
     - name: 1. Create Backup on Proxmox Node
       command: "vzdump 200 --mode snapshot --storage local --compress zstd"
@@ -34,7 +34,7 @@
           delegate_to: localhost
           become: no
           copy:
-            dest: "/home/yash/hpc-automation/reports/backups/backup_report_{{ ansible_date_time.date }}.txt"
+            dest: "/home/yash/hpc-automation/reports/backup/backup_report_{{ ansible_date_time.iso8601 }}.txt"
             content: |
               ==========================================
               HPC CLUSTER BACKUP REPORT
@@ -54,5 +54,6 @@
             AWS_ACCESS_KEY_ID: "{{ vault_aws_access_key }}"
             AWS_SECRET_ACCESS_KEY: "{{ vault_aws_secret_key }}"
             BACKUP_DIR: "/tmp/hpc_backups/"
+            GPG_PASSPHRASE: "{{ vault_gpg_passphrase }}"
 
       when: backup_file is defined and backup_file != ""

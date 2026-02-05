@@ -1,0 +1,113 @@
+---
+# PART 1: Configure the Proxmox Nodes
+- name: 1. Deploy Exporters to Proxmox Nodes
+  hosts: pve_cluster
+  become: yes
+  tasks:
+    - name: Install Prometheus Node Exporter
+      apt:
+        name: prometheus-node-exporter
+        state: present
+        update_cache: yes
+
+    - name: Ensure Node Exporter is running
+      systemd:
+        name: prometheus-node-exporter
+        state: started
+        enabled: yes
+    
+    - name: Verify Exporter is responding
+      uri:
+        url: "http://localhost:9100/metrics"
+        return_content: yes
+      register: exporter_check
+      failed_when: "'node_cpu_seconds_total' not in exporter_check.content"
+
+# PART 2: Configure the Prometheus Server & Alerting
+- name: 2. Setup Prometheus Server and Alertmanager
+  hosts: localhost
+  connection: local
+  become: yes
+  tasks:
+    - name: Install Prometheus and Alertmanager
+      apt:
+        name: [prometheus, prometheus-alertmanager]
+        state: present
+
+    - name: Create Monitoring Rules File
+      copy:
+        dest: /etc/prometheus/rules.yml
+        content: |
+          groups:
+          - name: hpc_cluster_rules
+            rules:
+            - alert: ProxmoxNodeDown
+              expr: up{job="hpc_cluster"} == 0
+              for: 1m
+              labels:
+                severity: critical
+              annotations:
+                # We use 'raw' so Ansible doesn't try to interpret these Prometheus labels
+                summary: "Proxmox Node Down: {% raw %}{{ $labels.instance }}{% endraw %}"
+                description: "Node {% raw %}{{ $labels.instance }}{% endraw %}"
+
+    - name: Configure Prometheus with Alerting (The prometheus.yml file)
+      copy:
+        dest: /etc/prometheus/prometheus.yml
+        content: |
+          global:
+            scrape_interval: 15s
+
+          alerting:
+            alertmanagers:
+              - static_configs:
+                - targets: ['localhost:9093']
+
+          rule_files:
+            - "rules.yml"
+
+          scrape_configs:
+            - job_name: 'hpc_cluster'
+              static_configs:
+                - targets: ['192.168.122.11:9100', '192.168.122.12:9100', '192.168.122.13:9100']
+
+    - name: Restart Monitoring Services
+      systemd:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - prometheus
+        - prometheus-alertmanager
+
+# PART 3: The Visualization Layer (Grafana)
+- name: 3. Setup Grafana Dashboard
+  hosts: localhost
+  connection: local
+  become: yes
+  tasks:
+    - name: Ensure gnupg and software-properties-common are present
+      apt:
+        name: [gnupg, software-properties-common]
+        state: present
+
+    - name: Add Grafana GPG key
+      apt_key:
+        url: https://apt.grafana.com/gpg.key
+        state: present
+
+    - name: Add Grafana Repository
+      apt_repository:
+        repo: deb https://apt.grafana.com stable main
+        state: present
+
+    - name: Install Grafana
+      apt:
+        name: grafana
+        state: present
+        update_cache: yes
+
+    - name: Start Grafana Service
+      systemd:
+        name: grafana-server
+        state: started
+        enabled: yes

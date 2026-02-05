@@ -1,0 +1,35 @@
+---
+- name: Setup Alerting Stack on Ubuntu Commander
+  hosts: localhost
+  connection: local
+  become: yes
+  tasks:
+    - name: 1. Install Alertmanager
+      apt:
+        name: prometheus-alertmanager
+        state: present
+
+    - name: 2. Configure Alertmanager (Simple Log/Local)
+      copy:
+        dest: /etc/prometheus/alertmanager.yml
+        content: |
+          route:
+            receiver: 'default-receiver'
+          receivers:
+            - name: 'default-receiver'
+    
+    - name: 3. Create Monitoring Rules File
+      copy:
+        dest: /etc/prometheus/rules.yml
+        content: |
+          groups:
+          - name: hpc_cluster_rules
+            rules:
+            - alert: ProxmoxNodeDown
+              expr: up{job="hpc_cluster"} == 0
+              for: 1m
+              labels:
+                severity: critical
+              annotations:
+                summary: "Proxmox Node Down: {{ $labels.instance }}"
+                description: "Node {{ $labels.instance }} has been unreachable for 1 minute."
