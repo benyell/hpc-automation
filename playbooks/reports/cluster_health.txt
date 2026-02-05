@@ -1,0 +1,41 @@
+==========================================
+HPC CLUSTER HEALTH REPORT - 2026-02-04T23:15:55Z
+==========================================
+
+--- SYSTEM STATS ---
+Node: pve-01
+- Disk Usage: 13%
+- CPU Load (1, 5, 15m):  0.12, 0.16, 0.17
+------------------------------------------
+Node: pve-02
+- Disk Usage: 13%
+- CPU Load (1, 5, 15m):  0.05, 0.10, 0.17
+------------------------------------------
+Node: pve-03
+- Disk Usage: 13%
+- CPU Load (1, 5, 15m):  0.41, 0.44, 0.43
+------------------------------------------
+
+--- STORAGE & QUORUM (Global) ---
+Quorum information
+Quorum provider:  corosync_votequorum
+Nodes:            3
+Quorum:           2  
+
+CEPH STATUS:
+  cluster:
+    id:     cce24bf9-1ecd-4907-b393-de2136e72585
+    health: HEALTH_OK
+ 
+  services:
+    mon: 2 daemons, quorum pve-02,pve-03 (age 3h)
+    mgr: pve-02(active, since 3h), standbys: pve-03
+    osd: 3 osds: 3 up (since 3h), 3 in (since 3h)
+ 
+  data:
+    pools:   2 pools, 33 pgs
+    objects: 7 objects, 449 KiB
+    usage:   186 MiB used, 150 GiB / 150 GiB avail
+    pgs:     33 active+clean
+ 
+==========================================

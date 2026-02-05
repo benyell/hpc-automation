@@ -1,0 +1,62 @@
+---
+- name: Generate HPC Cluster Health Report
+  hosts: pve_cluster
+  become: yes
+  tasks:
+    - name: Get Disk Usage
+      shell: "df -h / | awk 'NR==2 {print $5}'"
+      register: disk_usage
+
+    - name: Get CPU Load
+      shell: "uptime | awk -F'load average:' '{ print $2 }'"
+      register: cpu_load
+
+    - name: Get Ceph Status (from Node 01 only)
+      shell: "pveceph status"
+      register: ceph_status
+      when: inventory_hostname == 'pve-01'
+
+    - name: Get Cluster Quorum Status
+      shell: "pvecm status | grep -E 'Quorum|Nodes'"
+      register: cluster_quorum
+      when: inventory_hostname == 'pve-01'
+
+    - name: Get List of VMs
+      shell: "qm list | awk 'NR>1 {print $1, \"(\" $2 \")\", \"[\" $3 \"]\"}'"
+      register: vm_list
+
+    - name: Create local report directory
+      delegate_to: localhost
+      run_once: true
+      become: no
+      file:
+        path: "./reports"
+        state: directory
+
+    - name: Generate Combined Report
+      delegate_to: localhost
+      run_once: true
+      become: no
+      copy:
+        dest: "./reports/cluster_health_{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}.txt"
+        content: |
+          ==========================================
+          HPC CLUSTER HEALTH REPORT - {{ ansible_date_time.iso8601 }}
+          ==========================================
+          
+          --- NODE STATUS & VMS ---
+          {% for host in groups['pve_cluster'] %}
+          Node: {{ host }}
+          - Disk Usage: {{ hostvars[host]['disk_usage']['stdout'] }}
+          - CPU Load: {{ hostvars[host]['cpu_load']['stdout'] }}
+          - Active VMs:
+            {{ hostvars[host]['vm_list']['stdout'] | default('No VMs found') }}
+          ------------------------------------------
+          {% endfor %}
+
+          --- STORAGE & QUORUM (Global) ---
+          {{ hostvars['pve-01']['cluster_quorum']['stdout'] | default('N/A') }}
+          
+          CEPH STATUS:
+          {{ hostvars['pve-01']['ceph_status']['stdout'] | default('N/A') }}
+          ==========================================

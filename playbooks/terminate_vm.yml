@@ -1,0 +1,18 @@
+---
+- name: Infrastructure as Code - Terminate VM
+  hosts: localhost
+  vars:
+    ansible_python_interpreter: /home/yash/miniforge3/bin/python3
+  vars_prompt:
+    - name: "pve_password"
+      prompt: "Enter Proxmox Password to CONFIRM TERMINATION"
+      private: yes
+  tasks:
+    - name: Permanently Delete VM 200
+      community.general.proxmox_kvm:
+        api_user: "root@pam"
+        api_password: "{{ pve_password }}"
+        api_host: "192.168.122.11"
+        node: "pve-03"
+        vmid: 200
+        state: absent # This is the "Destroy" command

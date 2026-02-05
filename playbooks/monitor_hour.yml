@@ -1,0 +1,9 @@
+---
+- name: Monitor Cluster for 1 Hour
+  hosts: localhost
+  tasks:
+    - name: Run health report 4 times with 15-minute delays
+      include_tasks: cluster_health_report.yml
+      loop: [1, 2, 3, 4]
+      pause:
+        minutes: 15

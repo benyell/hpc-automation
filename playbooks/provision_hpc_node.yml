@@ -1,0 +1,27 @@
+---
+- name: Infrastructure as Code - Provision VM
+  hosts: localhost
+  become: no
+  vars:
+    # Explicitly point to where you installed proxmoxer
+    ansible_python_interpreter: /home/yash/miniforge3/bin/python3
+  vars_prompt:
+    - name: "pve_password"
+      prompt: "Enter root password for Proxmox API"
+      private: yes
+  tasks:
+    - name: Create a new Ubuntu VM on pve-03
+      community.general.proxmox_kvm:
+        api_user: "root@pam"
+        api_password: "{{ pve_password }}"
+        api_host: "192.168.122.11"
+        node: "pve-03"
+        name: "hpc-worker-01"
+        vmid: 200
+        net:
+          net0: "virtio,bridge=vmbr0"
+        memory: 2048
+        cores: 2
+        storage: "local-lvm"
+        state: present
+        timeout: 300
