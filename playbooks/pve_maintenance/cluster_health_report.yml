@@ -30,7 +30,7 @@
       run_once: true
       become: no
       file:
-        path: "./reports"
+        path: "~/hpc-automation/reports"
         state: directory
 
     - name: Generate Combined Report
@@ -38,7 +38,7 @@
       run_once: true
       become: no
       copy:
-        dest: "./reports/cluster_health_{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}.txt"
+        dest: "~/hpc-automation/reports/cluster/cluster_health_{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}.txt"
         content: |
           ==========================================
           HPC CLUSTER HEALTH REPORT - {{ ansible_date_time.iso8601 }}

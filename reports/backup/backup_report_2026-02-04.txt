@@ -1,0 +1,9 @@
+==========================================
+HPC CLUSTER BACKUP REPORT
+Generated: 2026-02-05T02:26:50Z
+==========================================
+SOURCE NODE: pve-03
+FILE: vzdump-qemu-200-2026_02_04-21_26_52.vma.zst
+SIZE: 344.05 KB
+STATUS: LOCAL FETCH SUCCESSFUL
+==========================================

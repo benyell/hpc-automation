@@ -1,0 +1,28 @@
+---
+- name: Orchestrate Cluster Automation Schedule
+  hosts: localhost
+  connection: local
+  become: no
+  tasks:
+    - name: Schedule Nightly Maintenance (2 AM)
+      ansible.builtin.cron:
+        name: "Nightly Cluster Patching"
+        hour: "2"
+        minute: "0"
+        job: "cd ~/hpc-automation && ansible-playbook playbooks/pve_maintenance/cluster_maintenance.yml"
+        state: present
+
+    - name: Schedule 15-Minute Health Audit
+      ansible.builtin.cron:
+        name: "HPC Cluster Health Audit"
+        minute: "*/15"
+        job: "cd ~/hpc-automation && ansible-playbook playbooks/pve_maintenance/cluster_health_report.yml"
+        state: present
+
+    - name: Schedule S3 Cloud Sync (3 AM - after local backups)
+      ansible.builtin.cron:
+        name: "Sync Proxmox Backups to AWS S3"
+        hour: "3"
+        minute: "0"
+        job: "/home/yash/miniforge3/bin/python3 ~/hpc-automation/scripts/backup_to_s3.py"
+        state: present

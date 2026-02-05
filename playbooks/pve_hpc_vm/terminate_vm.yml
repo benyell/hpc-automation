@@ -8,6 +8,15 @@
       prompt: "Enter Proxmox Password to CONFIRM TERMINATION"
       private: yes
   tasks:
+    - name: Ensure VM 200 is stopped
+      community.general.proxmox_kvm:
+        api_user: "root@pam"
+        api_password: "{{ pve_password }}"
+        api_host: "192.168.122.11"
+        node: "pve-03"
+        vmid: 200
+        state: stopped
+
     - name: Permanently Delete VM 200
       community.general.proxmox_kvm:
         api_user: "root@pam"
@@ -15,4 +24,4 @@
         api_host: "192.168.122.11"
         node: "pve-03"
         vmid: 200
-        state: absent # This is the "Destroy" command
+        state: absent

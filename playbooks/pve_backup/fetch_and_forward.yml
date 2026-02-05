@@ -1,0 +1,58 @@
+---
+- name: Centralized Hybrid Cloud Backup Pipeline
+  hosts: pve_cluster
+  become: yes
+  vars_files:
+    - ../vars/secrets.yml
+  tasks:
+    - name: 1. Create Backup on Proxmox Node
+      command: "vzdump 200 --mode snapshot --storage local --compress zstd"
+      register: vzdump_output
+      ignore_errors: yes
+
+    - name: 2. Parse filename from output
+      set_fact:
+        backup_file: "{{ vzdump_output.stdout | regex_search('/var/lib/vz/dump/vzdump-qemu-200-.*\\.vma\\.zst') }}"
+
+    # We only proceed if this specific node actually performed the backup
+    - name: 3. Fetch and Report Locally
+      block:
+        - name: 3a. Fetch backup from Node to Ubuntu Commander
+          ansible.builtin.fetch:
+            src: "{{ backup_file }}"
+            dest: "/tmp/hpc_backups/"
+            flat: yes
+
+        - name: 3b. Get file stats on Ubuntu Commander
+          delegate_to: localhost
+          become: no
+          stat:
+            path: "/tmp/hpc_backups/{{ backup_file | basename }}"
+          register: local_file_info
+
+        - name: 3c. Generate Real-Time Audit Report
+          delegate_to: localhost
+          become: no
+          copy:
+            dest: "/home/yash/hpc-automation/reports/backups/backup_report_{{ ansible_date_time.date }}.txt"
+            content: |
+              ==========================================
+              HPC CLUSTER BACKUP REPORT
+              Generated: {{ ansible_date_time.iso8601 }}
+              ==========================================
+              SOURCE NODE: {{ inventory_hostname }}
+              FILE: {{ backup_file | basename }}
+              SIZE: {{ (local_file_info.stat.size / 1024) | round(2) }} KB
+              STATUS: LOCAL FETCH SUCCESSFUL
+              ==========================================
+
+        - name: 3d. Upload to AWS S3
+          delegate_to: localhost
+          become: no
+          command: "/home/yash/miniforge3/bin/python3 /home/yash/hpc-automation/scripts/backup_to_s3.py"
+          environment:
+            AWS_ACCESS_KEY_ID: "{{ vault_aws_access_key }}"
+            AWS_SECRET_ACCESS_KEY: "{{ vault_aws_secret_key }}"
+            BACKUP_DIR: "/tmp/hpc_backups/"
+
+      when: backup_file is defined and backup_file != ""
